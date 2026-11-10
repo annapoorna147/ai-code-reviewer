@@ -1,6 +1,9 @@
 from fastapi import FastAPI
+
 from app.models.review import ReviewRequest, ReviewResponse
 from app.services.code_analyzer import analyze_code
+from app.services.ai_reviewer import review_with_ai, AIReviewError
+
 
 app = FastAPI(
     title="AI Code Reviewer",
@@ -25,11 +28,37 @@ def health_check():
 
 @app.post("/review", response_model=ReviewResponse)
 def review_code(request: ReviewRequest):
-    findings = analyze_code(request.code)
+    static_findings = analyze_code(request.code)
+
+    ai_available = True
+
+    try:
+        ai_findings = review_with_ai(request.code)
+    except AIReviewError:
+        ai_findings = []
+        ai_available = False
+
+    combined_findings = static_findings.copy()
+
+    existing_findings = {
+        (finding.title, finding.line)
+        for finding in combined_findings
+    }
+
+    for finding in ai_findings:
+        key = (finding.title, finding.line)
+
+        if key not in existing_findings:
+            combined_findings.append(finding)
+            existing_findings.add(key)
 
     return ReviewResponse(
         language=request.language,
-        total_issues=len(findings),
-        findings=findings,
-        status="issues_found" if findings else "clean"
+        total_issues=len(combined_findings),
+        findings=combined_findings,
+        status=(
+            "issues_found"
+            if combined_findings
+            else "clean"
+        )
     )
