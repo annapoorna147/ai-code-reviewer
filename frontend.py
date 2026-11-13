@@ -78,6 +78,27 @@ def submit_review(code):
         return None, "Could not connect to the backend. Check whether FastAPI is running."
 
 
+def fetch_review_history():
+    try:
+        response = requests.get(f"{API_URL}/history", timeout=10)
+        response.raise_for_status()
+        return response.json().get("reviews", []), None
+    except requests.RequestException:
+        return [], "Could not retrieve review history. Check the backend connection."
+
+
+def fetch_review_detail(review_id):
+    try:
+        response = requests.get(
+            f"{API_URL}/history/{review_id}",
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json(), None
+    except requests.RequestException:
+        return None, "Could not retrieve this review."
+
+
 with st.sidebar:
     st.title("🔍 Code Reviewer")
     st.caption("AI-powered Python code analysis")
@@ -258,3 +279,76 @@ if result:
     )
 
     st.caption("AI Code Reviewer | Built with Python, FastAPI and Streamlit")
+
+
+# Review History
+st.divider()
+st.subheader("📚 Review History")
+st.write("Revisit your previously analyzed Python code.")
+
+history_items, history_error = fetch_review_history()
+
+if history_error:
+    st.warning(history_error)
+
+elif not history_items:
+    st.info("No saved reviews yet. Submit your first code review!")
+
+else:
+    def history_label(item):
+        created = item["created_at"].replace("T", " ")[:19]
+        return (
+            f'#{item["id"]} | {created} | '
+            f'Score: {item["quality_score"]}/100 | '
+            f'Issues: {item["total_issues"]}'
+        )
+
+    selected_id = st.selectbox(
+        "Select a previous review",
+        options=[item["id"] for item in history_items],
+        format_func=lambda review_id: history_label(
+            next(item for item in history_items if item["id"] == review_id)
+        ),
+    )
+
+    if selected_id is not None:
+        detail, detail_error = fetch_review_detail(selected_id)
+
+        if detail_error:
+            st.error(detail_error)
+
+        else:
+            previous = detail["result"]
+
+            history_score, history_issues, history_status = st.columns(3)
+
+            history_score.metric(
+                "Quality Score",
+                f'{previous["quality_score"]}/100',
+            )
+            history_issues.metric(
+                "Total Issues",
+                previous["total_issues"],
+            )
+            history_status.metric(
+                "Review Status",
+                previous["status"].replace("_", " ").title(),
+            )
+
+            with st.expander("View submitted code"):
+                st.code(detail["code"], language="python")
+
+            with st.expander("View findings"):
+                if not previous["findings"]:
+                    st.success("No issues detected.")
+                else:
+                    for index, finding in enumerate(
+                        previous["findings"], start=1
+                    ):
+                        st.markdown(
+                            f'**{index}. {finding["title"]}** '
+                            f'— {finding["severity"].upper()} '
+                            f'(Line {finding["line"]})'
+                        )
+                        st.write(finding["explanation"])
+                        st.info(finding["suggestion"])

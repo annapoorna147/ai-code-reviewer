@@ -66,7 +66,9 @@ API documentation: http://127.0.0.1:8000/docs
 |---|---|---|
 | GET | / | Application home |
 | GET | /health | Health check |
-| POST | /review | Review Python code |
+| POST | /review | Review Python code and save the result |
+| GET | /history | Retrieve recent review history |
+| GET | /history/{review_id} | Retrieve a saved review and submitted code |
 
 ## Quality Scoring
 
@@ -79,6 +81,12 @@ API documentation: http://127.0.0.1:8000/docs
 
 Starting score: 100. Minimum score: 0.
 
+## Review History
+
+Review results are stored locally in a SQLite database at `data/reviews.db`. The database is created automatically when the backend starts. The `data/` directory is excluded from Git.
+
+The dashboard displays recent reviews, allows users to select previous reviews, and shows their submitted code and findings.
+
 ## Run Tests
 
     python -m pytest -v --ignore=ai-code-reviewer
@@ -90,6 +98,7 @@ Starting score: 100. Minimum score: 0.
 - Day 3: Gemini AI integration and fallback handling.
 - Day 4: Quality scoring and structured review reports.
 - Day 5: Streamlit frontend and downloadable JSON reports.
+- Day 6: SQLite review history, saved review details, and history dashboard.
 
 ## Author
 

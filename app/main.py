@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from app.models.review import ReviewRequest, ReviewResponse
 from app.services.code_analyzer import analyze_code
@@ -7,6 +7,12 @@ from app.services.quality_scorer import (
     calculate_quality_score,
     summarize_severity,
 )
+from app.services.review_history import (
+    initialize_database,
+    save_review,
+    get_history,
+    get_review,
+)
 
 
 app = FastAPI(
@@ -14,6 +20,8 @@ app = FastAPI(
     description="An AI-powered code review platform",
     version="1.0.0"
 )
+
+initialize_database()
 
 
 @app.get("/")
@@ -66,7 +74,7 @@ def review_code(request: ReviewRequest):
     else:
         status = "clean"
 
-    return ReviewResponse(
+    result = ReviewResponse(
         language=request.language,
         quality_score=quality_score,
         total_issues=len(combined_findings),
@@ -75,3 +83,34 @@ def review_code(request: ReviewRequest):
         status=status,
         ai_status=ai_status
     )
+
+    save_review(request.code, result)
+
+    return result
+
+
+@app.get("/history")
+def review_history(limit: int = 20):
+    if not 1 <= limit <= 100:
+        raise HTTPException(
+            status_code=400,
+            detail="Limit must be between 1 and 100."
+        )
+
+    return {
+        "total": len(get_history(limit)),
+        "reviews": get_history(limit)
+    }
+
+
+@app.get("/history/{review_id}")
+def review_history_detail(review_id: int):
+    review = get_review(review_id)
+
+    if review is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Review not found."
+        )
+
+    return review
