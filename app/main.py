@@ -1,4 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from app.services.auth_dependency import get_current_user
+from app.routers.auth import router as auth_router
+from app.services.user_database import initialize_user_database
 
 from app.models.review import ReviewRequest, ReviewResponse
 from app.services.code_analyzer import analyze_code
@@ -12,6 +15,7 @@ from app.services.review_history import (
     save_review,
     get_history,
     get_review,
+    get_analytics,
 )
 
 
@@ -22,6 +26,10 @@ app = FastAPI(
 )
 
 initialize_database()
+initialize_user_database()
+
+
+app.include_router(auth_router)
 
 
 @app.get("/")
@@ -39,7 +47,7 @@ def health_check():
 
 
 @app.post("/review", response_model=ReviewResponse)
-def review_code(request: ReviewRequest):
+def review_code(request: ReviewRequest, current_user: dict = Depends(get_current_user)):
     static_findings = analyze_code(request.code)
 
     ai_status = "available"
@@ -84,28 +92,30 @@ def review_code(request: ReviewRequest):
         ai_status=ai_status
     )
 
-    save_review(request.code, result)
+    save_review(request.code, result, user_id=current_user['id'])
 
     return result
 
 
 @app.get("/history")
-def review_history(limit: int = 20):
+def review_history(limit: int = 20, current_user: dict = Depends(get_current_user)):
     if not 1 <= limit <= 100:
         raise HTTPException(
             status_code=400,
             detail="Limit must be between 1 and 100."
         )
 
+    reviews = get_history(limit, user_id=current_user["id"])
+
     return {
-        "total": len(get_history(limit)),
-        "reviews": get_history(limit)
+        "total": len(reviews),
+        "reviews": reviews
     }
 
 
 @app.get("/history/{review_id}")
-def review_history_detail(review_id: int):
-    review = get_review(review_id)
+def review_history_detail(review_id: int, current_user: dict = Depends(get_current_user)):
+    review = get_review(review_id, user_id=current_user['id'])
 
     if review is None:
         raise HTTPException(
@@ -114,3 +124,8 @@ def review_history_detail(review_id: int):
         )
 
     return review
+
+
+@app.get("/analytics")
+def review_analytics(current_user: dict = Depends(get_current_user)):
+    return get_analytics(user_id=current_user["id"])

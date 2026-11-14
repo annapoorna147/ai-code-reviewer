@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 import app.services.review_history as history
 from app.main import app
+from app.services.auth_dependency import get_current_user
 
 
 client = TestClient(app)
@@ -24,6 +25,16 @@ def disable_external_ai(monkeypatch):
         "app.main.review_with_ai",
         lambda code: [],
     )
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": 999,
+        "username": "history_test_user",
+        "email": "history-test@example.com",
+    }
+
+    yield
+
+    app.dependency_overrides.pop(get_current_user, None)
 
 
 def test_review_is_saved_to_history():

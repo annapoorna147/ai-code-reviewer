@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.services.auth_dependency import get_current_user
 from app.models.review import ReviewFinding
 from app.services.ai_reviewer import AIReviewError
 
@@ -11,11 +12,21 @@ client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def disable_external_ai(monkeypatch):
-    """Prevent automated tests from calling Gemini."""
+    """Prevent Gemini calls and authenticate review test requests."""
     monkeypatch.setattr(
         "app.main.review_with_ai",
         lambda code: []
     )
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": 999,
+        "username": "review_test_user",
+        "email": "review-test@example.com",
+    }
+
+    yield
+
+    app.dependency_overrides.pop(get_current_user, None)
 
 
 def test_review_detects_eval():

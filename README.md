@@ -13,6 +13,13 @@ An AI-powered Python code review platform built with FastAPI, Streamlit, and Goo
 - Detailed findings with line numbers and suggestions.
 - Interactive Streamlit dashboard.
 - Downloadable JSON review reports.
+- User registration and login.
+- Secure password hashing using Argon2.
+- JWT-based authentication.
+- Protected API endpoints.
+- User-specific review history.
+- Personal analytics dashboard.
+- SQLite database for persistent storage.
 - Automated tests.
 
 ## Technology Stack
@@ -23,6 +30,9 @@ An AI-powered Python code review platform built with FastAPI, Streamlit, and Goo
 - Google Gemini API
 - Pydantic
 - Python AST
+- SQLite
+- JWT / PyJWT
+- Argon2 password hashing
 - Requests
 - Pytest
 - Uvicorn
@@ -35,18 +45,27 @@ An AI-powered Python code review platform built with FastAPI, Streamlit, and Goo
     source .venv/bin/activate
     pip install -r requirements.txt
 
-## Gemini Configuration
+## Environment Configuration
 
-Create a .env file:
+Create a `.env` file in the project root:
 
     GEMINI_API_KEY=your_gemini_api_key
     GEMINI_MODEL=gemini-3.8-flash
+    JWT_SECRET_KEY=your_secure_random_secret
 
-Never upload your API key to GitHub.
+Generate a secure JWT secret using:
+
+    python -c "import secrets; print(secrets.token_urlsafe(48))"
+
+Never upload your `.env` file, API keys, JWT secrets, or passwords to GitHub.
 
 ## Run Backend
 
     uvicorn app.main:app --reload
+
+Backend: http://127.0.0.1:8000
+
+API documentation: http://127.0.0.1:8000/docs
 
 ## Run Frontend
 
@@ -58,17 +77,29 @@ Open another Terminal window:
 
 Frontend: http://localhost:8501
 
-API documentation: http://127.0.0.1:8000/docs
-
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | / | Application home |
 | GET | /health | Health check |
-| POST | /review | Review Python code and save the result |
-| GET | /history | Retrieve recent review history |
-| GET | /history/{review_id} | Retrieve a saved review and submitted code |
+| POST | /auth/register | Register a new account |
+| POST | /auth/login | Authenticate and receive a JWT |
+| POST | /review | Review Python code (authenticated) |
+| GET | /history | Retrieve personal review history (authenticated) |
+| GET | /history/{review_id} | Retrieve a saved personal review (authenticated) |
+| GET | /analytics | Retrieve personal review analytics (authenticated) |
+
+Protected endpoints require a valid JWT bearer token in the Authorization header.
+
+## Authentication
+
+- Users can create accounts with a username, email, and password.
+- Passwords are securely hashed using Argon2.
+- Successful login returns a JWT access token.
+- Access tokens expire after 30 minutes.
+- Review, history, and analytics endpoints require authentication.
+- Users can access only their own authenticated review records.
 
 ## Quality Scoring
 
@@ -81,15 +112,30 @@ API documentation: http://127.0.0.1:8000/docs
 
 Starting score: 100. Minimum score: 0.
 
-## Review History
+## Review History and Database
 
-Review results are stored locally in a SQLite database at `data/reviews.db`. The database is created automatically when the backend starts. The `data/` directory is excluded from Git.
+Review results and user accounts are stored locally in a SQLite database at `data/reviews.db`.
 
-The dashboard displays recent reviews, allows users to select previous reviews, and shows their submitted code and findings.
+The database and required tables are initialized automatically when the backend starts.
+
+The dashboard displays account-specific reviews, allows users to select previous reviews, and shows submitted code and findings.
+
+The `data/` directory is excluded from Git.
+
+## Analytics Dashboard
+
+The personal analytics dashboard displays:
+
+- Total reviews completed.
+- Average code quality score.
+- Total issues detected.
+- Issue distribution by severity.
+
+Analytics are calculated using the authenticated user's review records.
 
 ## Run Tests
 
-    python -m pytest -v --ignore=ai-code-reviewer
+    python -m pytest -q tests/
 
 ## Development Progress
 
@@ -99,6 +145,7 @@ The dashboard displays recent reviews, allows users to select previous reviews, 
 - Day 4: Quality scoring and structured review reports.
 - Day 5: Streamlit frontend and downloadable JSON reports.
 - Day 6: SQLite review history, saved review details, and history dashboard.
+- Day 7: User authentication, JWT security, password hashing, protected APIs, and personal analytics.
 
 ## Author
 

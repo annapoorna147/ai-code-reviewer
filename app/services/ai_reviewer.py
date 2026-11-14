@@ -4,6 +4,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
 from app.models.review import ReviewFinding
 
@@ -65,7 +66,10 @@ SOURCE CODE END
 """
 
     try:
-        client = genai.Client(api_key=api_key)
+        client = genai.Client(
+            api_key=api_key,
+            http_options=types.HttpOptions(timeout=20000)
+        )
 
         response = client.models.generate_content(
             model=model,
