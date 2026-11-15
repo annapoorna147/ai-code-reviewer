@@ -165,6 +165,60 @@ def fetch_analytics():
         return None, "Could not connect to the analytics service."
 
 
+def fetch_projects():
+    try:
+        response = requests.get(
+            f"{API_URL}/projects/",
+            headers=auth_headers(),
+            timeout=API_TIMEOUT,
+        )
+        response.raise_for_status()
+        return response.json(), None
+    except requests.RequestException:
+        return [], "Could not retrieve your projects."
+
+
+def create_project(name, description):
+    try:
+        response = requests.post(
+            f"{API_URL}/projects/",
+            json={"name": name, "description": description},
+            headers=auth_headers(),
+            timeout=API_TIMEOUT,
+        )
+        response.raise_for_status()
+        return response.json(), None
+    except requests.RequestException:
+        return None, "Could not create the project."
+
+
+def update_project(project_id, name, description):
+    try:
+        response = requests.put(
+            f"{API_URL}/projects/{project_id}",
+            json={"name": name, "description": description},
+            headers=auth_headers(),
+            timeout=API_TIMEOUT,
+        )
+        response.raise_for_status()
+        return response.json(), None
+    except requests.RequestException:
+        return None, "Could not update the project."
+
+
+def delete_project(project_id):
+    try:
+        response = requests.delete(
+            f"{API_URL}/projects/{project_id}",
+            headers=auth_headers(),
+            timeout=API_TIMEOUT,
+        )
+        response.raise_for_status()
+        return True, None
+    except requests.RequestException:
+        return False, "Could not delete the project."
+
+
 # ---------------- AUTHENTICATION SCREEN ----------------
 
 if not st.session_state.access_token:
@@ -588,3 +642,128 @@ st.divider()
 st.caption(
     "AI Code Reviewer | Python · FastAPI · Streamlit · SQLite · JWT"
 )
+
+
+# ---------------- PROJECT MANAGEMENT ----------------
+
+st.divider()
+st.header("📁 Project Management")
+st.write("Organize and manage your code review projects.")
+
+with st.expander("➕ Create a new project", expanded=False):
+    with st.form("create_project_form"):
+        new_project_name = st.text_input(
+            "Project name",
+            max_chars=100,
+            placeholder="e.g. AI Code Reviewer",
+        )
+        new_project_description = st.text_area(
+            "Project description",
+            max_chars=1000,
+            placeholder="Describe what this project does...",
+        )
+
+        create_clicked = st.form_submit_button(
+            "Create Project",
+            type="primary",
+            use_container_width=True,
+        )
+
+    if create_clicked:
+        if len(new_project_name.strip()) < 3:
+            st.warning("Project name must contain at least 3 characters.")
+        else:
+            with st.spinner("Creating project..."):
+                created, error = create_project(
+                    new_project_name.strip(),
+                    new_project_description.strip(),
+                )
+
+            if error:
+                st.error(error)
+            else:
+                st.success(f'Project "{created["name"]}" created!')
+                st.rerun()
+
+
+projects, projects_error = fetch_projects()
+
+if projects_error:
+    st.error(projects_error)
+
+elif not projects:
+    st.info("No projects yet. Create your first project above.")
+
+else:
+    st.metric("Total Projects", len(projects))
+
+    for project in projects:
+        with st.container(border=True):
+            st.subheader(project["name"])
+            st.write(
+                project["description"]
+                or "No description provided."
+            )
+            st.caption(
+                f'Created: {project["created_at"][:10]}'
+                f' | Last updated: {project["updated_at"][:10]}'
+            )
+
+            edit_column, delete_column = st.columns(2)
+
+            with edit_column:
+                with st.expander("✏️ Edit project"):
+                    with st.form(f'edit_project_{project["id"]}'):
+                        edited_name = st.text_input(
+                            "Project name",
+                            value=project["name"],
+                            max_chars=100,
+                        )
+                        edited_description = st.text_area(
+                            "Description",
+                            value=project["description"],
+                            max_chars=1000,
+                        )
+
+                        update_clicked = st.form_submit_button(
+                            "Save Changes",
+                            use_container_width=True,
+                        )
+
+                    if update_clicked:
+                        if len(edited_name.strip()) < 3:
+                            st.warning(
+                                "Project name must contain at least 3 characters."
+                            )
+                        else:
+                            updated, error = update_project(
+                                project["id"],
+                                edited_name.strip(),
+                                edited_description.strip(),
+                            )
+
+                            if error:
+                                st.error(error)
+                            else:
+                                st.success("Project updated successfully.")
+                                st.rerun()
+
+            with delete_column:
+                with st.popover("🗑️ Delete project"):
+                    st.warning(
+                        "This will permanently delete this project."
+                    )
+
+                    if st.button(
+                        "Confirm Delete",
+                        key=f'delete_project_{project["id"]}',
+                        type="primary",
+                        use_container_width=True,
+                    ):
+                        deleted, error = delete_project(project["id"])
+
+                        if error:
+                            st.error(error)
+                        else:
+                            st.success("Project deleted.")
+                            st.rerun()

@@ -1,7 +1,9 @@
 from fastapi import FastAPI, HTTPException, Depends
 from app.services.auth_dependency import get_current_user
 from app.routers.auth import router as auth_router
+from app.routers.projects import router as projects_router
 from app.services.user_database import initialize_user_database
+from app.services.project_database import initialize_project_database
 
 from app.models.review import ReviewRequest, ReviewResponse
 from app.services.code_analyzer import analyze_code
@@ -27,9 +29,11 @@ app = FastAPI(
 
 initialize_database()
 initialize_user_database()
+initialize_project_database()
 
 
 app.include_router(auth_router)
+app.include_router(projects_router)
 
 
 @app.get("/")

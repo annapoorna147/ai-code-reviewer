@@ -98,7 +98,7 @@ Protected endpoints require a valid JWT bearer token in the Authorization header
 - Passwords are securely hashed using Argon2.
 - Successful login returns a JWT access token.
 - Access tokens expire after 30 minutes.
-- Review, history, and analytics endpoints require authentication.
+- Review, history, analytics, and project management endpoints require authentication.
 - Users can access only their own authenticated review records.
 
 ## Quality Scoring
@@ -146,9 +146,33 @@ Analytics are calculated using the authenticated user's review records.
 - Day 5: Streamlit frontend and downloadable JSON reports.
 - Day 6: SQLite review history, saved review details, and history dashboard.
 - Day 7: User authentication, JWT security, password hashing, protected APIs, and personal analytics.
+- Day 8: Project management, project CRUD APIs, user-specific project ownership, and dashboard integration.
 
 ## Author
 
 Annapoorna S U
 
 GitHub: https://github.com/annapoorna147
+
+
+## Project Management
+
+Users can create and manage their own projects through the dashboard and API.
+
+Features:
+- Create projects with a name and description.
+- View a list of personal projects.
+- Retrieve individual project details.
+- Edit project information.
+- Delete projects.
+- Enforce project ownership so users cannot access other users' projects.
+
+Project data is stored in SQLite with creation and update timestamps.
+
+## Database Structure
+
+The application uses SQLite tables for:
+
+- `users`: account information and password hashes.
+- `reviews`: submitted code and review results.
+- `projects`: user-owned project information.
