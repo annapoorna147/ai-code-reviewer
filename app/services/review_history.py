@@ -41,11 +41,22 @@ def initialize_database():
                 "ALTER TABLE reviews ADD COLUMN user_id INTEGER REFERENCES users(id)"
             )
 
+        if "project_id" not in columns:
+            connection.execute(
+                "ALTER TABLE reviews ADD COLUMN project_id INTEGER"
+            )
+
+        connection.execute("""
+            CREATE INDEX IF NOT EXISTS idx_reviews_project_id
+            ON reviews(project_id)
+        """)
+
 
 def save_review(
     code: str,
     result: ReviewResponse,
     user_id: int | None = None,
+    project_id: int | None = None,
 ) -> int:
     created_at = datetime.now(timezone.utc).isoformat()
     result_json = result.model_dump_json()
@@ -53,10 +64,12 @@ def save_review(
     with get_connection() as connection:
         cursor = connection.execute(
             """
-            INSERT INTO reviews (created_at, code, result_json, user_id)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO reviews (
+                created_at, code, result_json, user_id, project_id
+            )
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (created_at, code, result_json, user_id),
+            (created_at, code, result_json, user_id, project_id),
         )
 
         return cursor.lastrowid
@@ -183,3 +196,39 @@ def get_analytics(user_id: int) -> dict:
         "total_issues": total_issues,
         "severity_distribution": severity_distribution,
     }
+
+def get_project_history(
+    project_id: int,
+    user_id: int,
+    limit: int = 20,
+) -> list[dict]:
+    """Return review history for one project owned by one user."""
+
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT id, created_at, result_json
+            FROM reviews
+            WHERE project_id = ? AND user_id = ?
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (project_id, user_id, limit),
+        ).fetchall()
+
+    history = []
+
+    for row in rows:
+        result = json.loads(row["result_json"])
+
+        history.append({
+            "id": row["id"],
+            "created_at": row["created_at"],
+            "quality_score": result["quality_score"],
+            "total_issues": result["total_issues"],
+            "status": result["status"],
+            "ai_status": result["ai_status"],
+        })
+
+    return history
+

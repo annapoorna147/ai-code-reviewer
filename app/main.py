@@ -3,7 +3,10 @@ from app.services.auth_dependency import get_current_user
 from app.routers.auth import router as auth_router
 from app.routers.projects import router as projects_router
 from app.services.user_database import initialize_user_database
-from app.services.project_database import initialize_project_database
+from app.services.project_database import (
+    initialize_project_database,
+    get_project,
+)
 
 from app.models.review import ReviewRequest, ReviewResponse
 from app.services.code_analyzer import analyze_code
@@ -52,6 +55,15 @@ def health_check():
 
 @app.post("/review", response_model=ReviewResponse)
 def review_code(request: ReviewRequest, current_user: dict = Depends(get_current_user)):
+    if request.project_id is not None:
+        project = get_project(request.project_id, current_user["id"])
+
+        if project is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Project not found."
+            )
+
     static_findings = analyze_code(request.code)
 
     ai_status = "available"
@@ -96,7 +108,12 @@ def review_code(request: ReviewRequest, current_user: dict = Depends(get_current
         ai_status=ai_status
     )
 
-    save_review(request.code, result, user_id=current_user['id'])
+    save_review(
+        request.code,
+        result,
+        user_id=current_user["id"],
+        project_id=request.project_id,
+    )
 
     return result
 

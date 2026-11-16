@@ -16,6 +16,12 @@ class ReviewRequest(BaseModel):
         description="Programming language"
     )
 
+    project_id: int | None = Field(
+        default=None,
+        gt=0,
+        description="Optional project ID associated with this review"
+    )
+
 
 class ReviewFinding(BaseModel):
     title: str

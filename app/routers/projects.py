@@ -9,6 +9,7 @@ from app.services.project_database import (
     update_project,
     delete_project,
 )
+from app.services.review_history import get_project_history
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -84,3 +85,36 @@ def remove_project(
         )
 
     return {"message": "Project deleted successfully."}
+
+@router.get("/{project_id}/history")
+def retrieve_project_history(
+    project_id: int,
+    limit: int = 20,
+    current_user: dict = Depends(get_current_user),
+):
+    project = get_project(project_id, current_user["id"])
+
+    if project is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found.",
+        )
+
+    if not 1 <= limit <= 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Limit must be between 1 and 100.",
+        )
+
+    reviews = get_project_history(
+        project_id=project_id,
+        user_id=current_user["id"],
+        limit=limit,
+    )
+
+    return {
+        "project_id": project_id,
+        "total": len(reviews),
+        "reviews": reviews,
+    }
+

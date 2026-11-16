@@ -90,11 +90,16 @@ def authenticate(endpoint, email, password, username=None):
         return None, "Could not connect to the backend."
 
 
-def submit_review(code):
+def submit_review(code, project_id=None):
     try:
+        payload = {"code": code, "language": "python"}
+
+        if project_id is not None:
+            payload["project_id"] = project_id
+
         response = requests.post(
             f"{API_URL}/review",
-            json={"code": code, "language": "python"},
+            json=payload,
             headers=auth_headers(),
             timeout=90,
         )
@@ -130,6 +135,25 @@ def fetch_review_history():
 
     except requests.RequestException:
         return [], "Could not retrieve review history. Check the backend."
+
+
+def fetch_project_history(project_id):
+    try:
+        response = requests.get(
+            f"{API_URL}/projects/{project_id}/history",
+            headers=auth_headers(),
+            timeout=API_TIMEOUT,
+        )
+        response.raise_for_status()
+        return response.json().get("reviews", []), None
+
+    except requests.HTTPError as error:
+        if error.response is not None and error.response.status_code == 401:
+            return [], "Your session may have expired. Please log in again."
+        return [], "Could not retrieve project review history."
+
+    except requests.RequestException:
+        return [], "Could not retrieve project review history. Check the backend."
 
 
 def fetch_review_detail(review_id):
@@ -421,6 +445,20 @@ st.divider()
 st.subheader("Code Analysis Workspace")
 st.write("Paste your Python source code below to begin.")
 
+review_projects, review_projects_error = fetch_projects()
+
+if review_projects_error:
+    st.warning("Could not load projects. This review will be saved without a project.")
+
+selected_project = st.selectbox(
+    "Associate this review with a project",
+    options=[None, *review_projects],
+    format_func=lambda project: (
+        "No project" if project is None else project["name"]
+    ),
+    key="review_project_selector",
+)
+
 default_code = """def calculate_average(numbers):
     total = sum(numbers)
     return total / len(numbers)
@@ -460,7 +498,10 @@ if review_clicked:
 
     else:
         with st.spinner("Analyzing your code..."):
-            result, error = submit_review(code)
+            result, error = submit_review(
+                code,
+                selected_project["id"] if selected_project else None,
+            )
 
         if error:
             st.error(error)
@@ -564,9 +605,15 @@ if result:
 
 st.divider()
 st.subheader("📚 Your Review History")
-st.write("Only your account's saved reviews are shown here.")
 
-history_items, history_error = fetch_review_history()
+if selected_project:
+    st.write(f'Reviews associated with "{selected_project["name"]}".')
+    history_items, history_error = fetch_project_history(
+        selected_project["id"]
+    )
+else:
+    st.write("All your account's saved reviews are shown here.")
+    history_items, history_error = fetch_review_history()
 
 if history_error:
     st.warning(history_error)
