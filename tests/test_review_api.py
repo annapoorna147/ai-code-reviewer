@@ -171,3 +171,74 @@ def test_clean_code_when_ai_is_unavailable(monkeypatch):
     assert data["quality_score"] == 100
     assert data["status"] == "ai_unavailable"
     assert data["ai_status"] == "unavailable"
+
+
+def test_review_returns_advanced_metrics():
+    code = """
+def calculate(a, b):
+    if a > b:
+        return a
+    return b
+"""
+    response = client.post("/review", json={"code": code})
+
+    assert response.status_code == 200
+    metrics = response.json()["code_metrics"]
+
+    assert metrics["analysis_status"] == "success"
+    assert metrics["lines_of_code"] > 0
+    assert metrics["total_complexity"] >= 1
+    assert 0 <= metrics["maintainability_index"] <= 100
+    assert "technical_debt" in metrics
+    assert "duplicate_blocks" in metrics
+
+
+def test_review_metrics_for_syntax_error():
+    response = client.post(
+        "/review",
+        json={"code": "def broken("}
+    )
+
+    assert response.status_code == 200
+    metrics = response.json()["code_metrics"]
+
+    assert metrics["analysis_status"] == "syntax_error"
+    assert metrics["total_complexity"] is None
+    assert metrics["maintainability_index"] is None
+
+
+def test_review_metrics_when_ai_unavailable(monkeypatch):
+    def unavailable_ai(code):
+        raise AIReviewError("Gemini unavailable")
+
+    monkeypatch.setattr(
+        "app.main.review_with_ai",
+        unavailable_ai
+    )
+
+    response = client.post(
+        "/review",
+        json={"code": "print('Hello World')"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["ai_status"] == "unavailable"
+    assert data["code_metrics"]["analysis_status"] == "success"
+
+
+def test_review_response_model_supports_missing_metrics():
+    from app.models.review import ReviewResponse, SeveritySummary
+
+    result = ReviewResponse(
+        language="python",
+        quality_score=100,
+        total_issues=0,
+        severity_summary=SeveritySummary(),
+        findings=[],
+        status="clean",
+        ai_status="available",
+    )
+
+    assert result.code_metrics is None

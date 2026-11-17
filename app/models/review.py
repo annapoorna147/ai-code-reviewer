@@ -38,6 +38,33 @@ class SeveritySummary(BaseModel):
     low: int = 0
 
 
+class FunctionComplexity(BaseModel):
+    name: str
+    line: int
+    complexity: int = Field(ge=1)
+
+
+class DuplicateBlock(BaseModel):
+    lines: int
+    occurrences: int
+    code: list[str]
+
+
+class TechnicalDebt(BaseModel):
+    estimated_minutes: int = Field(ge=0)
+    estimated_hours: float = Field(ge=0)
+
+
+class CodeMetrics(BaseModel):
+    lines_of_code: int = Field(ge=0)
+    total_complexity: int | None = Field(default=None, ge=0)
+    function_complexities: list[FunctionComplexity] = []
+    maintainability_index: float | None = Field(default=None, ge=0, le=100)
+    duplicate_blocks: list[DuplicateBlock] = []
+    technical_debt: TechnicalDebt
+    analysis_status: Literal["success", "syntax_error"]
+
+
 class ReviewResponse(BaseModel):
     language: str
     quality_score: int = Field(ge=0, le=100)
@@ -46,3 +73,4 @@ class ReviewResponse(BaseModel):
     findings: list[ReviewFinding]
     status: Literal["clean", "issues_found", "ai_unavailable"]
     ai_status: Literal["available", "unavailable"]
+    code_metrics: CodeMetrics | None = None

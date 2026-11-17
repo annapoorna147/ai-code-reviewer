@@ -536,6 +536,75 @@ if result:
         "AI service: " + result["ai_status"].replace("_", " ").title()
     )
 
+    # ---------------- ADVANCED CODE METRICS ----------------
+
+    metrics = result.get("code_metrics")
+
+    if metrics:
+        st.divider()
+        st.subheader("Advanced Code Quality Metrics")
+
+        if metrics["analysis_status"] == "success":
+            complexity = metrics["total_complexity"]
+            maintainability = metrics["maintainability_index"]
+            debt = metrics["technical_debt"]
+
+            metric_cols = st.columns(4)
+
+            metric_cols[0].metric(
+                "Lines of Code",
+                metrics["lines_of_code"],
+            )
+            metric_cols[1].metric(
+                "Cyclomatic Complexity",
+                complexity,
+            )
+            metric_cols[2].metric(
+                "Maintainability Index",
+                f'{maintainability}/100',
+            )
+            metric_cols[3].metric(
+                "Estimated Technical Debt",
+                f'{debt["estimated_hours"]} hrs',
+            )
+
+            st.caption(
+                "Technical debt is a heuristic estimate based on finding severity."
+            )
+
+            function_metrics = metrics["function_complexities"]
+
+            if function_metrics:
+                st.markdown("**Function Complexity**")
+                st.dataframe(
+                    function_metrics,
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+            duplicate_blocks = metrics["duplicate_blocks"]
+
+            st.markdown("**Duplicate Code Detection**")
+
+            if duplicate_blocks:
+                for index, block in enumerate(duplicate_blocks, start=1):
+                    with st.expander(
+                        f'Duplicate Block {index} — '
+                        f'{block["lines"]} lines, '
+                        f'{block["occurrences"]} occurrences'
+                    ):
+                        st.code("\\n".join(block["code"]), language="python")
+            else:
+                st.success("No duplicate code blocks detected.")
+
+        else:
+            st.warning(
+                "Advanced metrics could not be calculated because "
+                "the submitted code contains a syntax error."
+            )
+    else:
+        st.info("Advanced metrics are unavailable for this review.")
+
     if result["ai_status"] == "unavailable":
         st.warning(
             "Gemini AI is currently unavailable. "

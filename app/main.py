@@ -10,6 +10,7 @@ from app.services.project_database import (
 
 from app.models.review import ReviewRequest, ReviewResponse
 from app.services.code_analyzer import analyze_code
+from app.services.advanced_metrics import analyze_advanced_metrics
 from app.services.ai_reviewer import review_with_ai, AIReviewError
 from app.services.quality_scorer import (
     calculate_quality_score,
@@ -90,6 +91,7 @@ def review_code(request: ReviewRequest, current_user: dict = Depends(get_current
 
     quality_score = calculate_quality_score(combined_findings)
     severity_summary = summarize_severity(combined_findings)
+    code_metrics = analyze_advanced_metrics(request.code, combined_findings)
 
     if combined_findings:
         status = "issues_found"
@@ -105,7 +107,8 @@ def review_code(request: ReviewRequest, current_user: dict = Depends(get_current
         severity_summary=severity_summary,
         findings=combined_findings,
         status=status,
-        ai_status=ai_status
+        ai_status=ai_status,
+        code_metrics=code_metrics
     )
 
     save_review(
