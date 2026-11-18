@@ -25,6 +25,18 @@ An AI-powered Python code review platform built with FastAPI, Streamlit, and Goo
 
 Note: Maintainability Index and technical debt are approximate estimates, not guarantees of actual maintenance effort.
 
+### Security Vulnerability Analysis
+- Potential SQL injection detection.
+- Unsafe pickle deserialization detection.
+- Unsafe YAML loading detection.
+- Subprocess command execution with shell=True detection.
+- Weak MD5 and SHA1 hash detection.
+- Insecure random number generation detection.
+- Separate security score out of 100.
+- Security findings with severity, affected line numbers, explanations, and suggested fixes.
+
+Note: Security analysis uses heuristic static analysis and may produce false positives or miss vulnerabilities. It is not a substitute for a professional security audit.
+
 ### User Management and Security
 - User registration and login.
 - Secure password hashing using Argon2.
@@ -220,6 +232,7 @@ The nested `ai-code-reviewer/` directory is excluded because it contains duplica
 - Day 8: Project management, project CRUD APIs, user-specific project ownership, and dashboard integration.
 - Day 9: Project-linked code reviews and project-specific review history.
 - Day 10: Advanced code quality analytics, cyclomatic complexity, maintainability index, duplicate code detection, technical debt estimation, and dashboard integration.
+- Day 11: Security vulnerability detection, separate security scoring, security analysis dashboard, and automated security tests.
 
 ## Author
 

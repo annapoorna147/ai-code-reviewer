@@ -10,6 +10,7 @@ from app.services.project_database import (
 
 from app.models.review import ReviewRequest, ReviewResponse
 from app.services.code_analyzer import analyze_code
+from app.services.security_analyzer import analyze_security
 from app.services.advanced_metrics import analyze_advanced_metrics
 from app.services.ai_reviewer import review_with_ai, AIReviewError
 from app.services.quality_scorer import (
@@ -77,6 +78,16 @@ def review_code(request: ReviewRequest, current_user: dict = Depends(get_current
 
     combined_findings = static_findings.copy()
 
+    # Add security vulnerability findings.
+    security_findings = analyze_security(request.code)
+
+    for finding in security_findings:
+        if not any(
+            existing.title == finding.title and existing.line == finding.line
+            for existing in combined_findings
+        ):
+            combined_findings.append(finding)
+
     existing_findings = {
         (finding.title, finding.line)
         for finding in combined_findings
@@ -93,6 +104,22 @@ def review_code(request: ReviewRequest, current_user: dict = Depends(get_current
     severity_summary = summarize_severity(combined_findings)
     code_metrics = analyze_advanced_metrics(request.code, combined_findings)
 
+    # Calculate a separate security score.
+    deductions = {
+        "critical": 25,
+        "high": 15,
+        "medium": 8,
+        "low": 3,
+    }
+
+    security_score = max(
+        0,
+        100 - sum(
+            deductions[finding.severity]
+            for finding in security_findings
+        ),
+    )
+
     if combined_findings:
         status = "issues_found"
     elif ai_status == "unavailable":
@@ -108,7 +135,8 @@ def review_code(request: ReviewRequest, current_user: dict = Depends(get_current
         findings=combined_findings,
         status=status,
         ai_status=ai_status,
-        code_metrics=code_metrics
+        code_metrics=code_metrics,
+        security_score=security_score,
     )
 
     save_review(

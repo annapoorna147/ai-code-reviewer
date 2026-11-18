@@ -518,12 +518,14 @@ if result:
     st.subheader("Review Dashboard")
 
     score = result["quality_score"]
+    security_score = result.get("security_score", 100)
     issues = result["total_issues"]
     summary = result["severity_summary"]
 
-    score_col, issues_col, status_col = st.columns(3)
+    score_col, security_col, issues_col, status_col = st.columns(4)
 
     score_col.metric("Code Quality Score", f"{score}/100")
+    security_col.metric("Security Score", f"{security_score}/100")
     issues_col.metric("Total Issues", issues)
     status_col.metric(
         "Review Status",
@@ -610,6 +612,46 @@ if result:
             "Gemini AI is currently unavailable. "
             "This report may contain static-analysis findings only."
         )
+
+    # ---------------- SECURITY ANALYSIS ----------------
+
+    st.divider()
+    st.subheader("Security Analysis")
+
+    security_titles = {
+        "Potential SQL injection",
+        "Unsafe pickle deserialization",
+        "Potentially unsafe YAML loading",
+        "Subprocess shell execution",
+        "Weak cryptographic hash",
+        "Potentially insecure random generation",
+    }
+
+    security_findings = [
+        finding
+        for finding in result["findings"]
+        if finding["title"] in security_titles
+    ]
+
+    if not security_findings:
+        st.success("No security vulnerabilities detected by the analyzer.")
+    else:
+        st.warning(
+            f"{len(security_findings)} potential security issue(s) detected."
+        )
+
+        for index, finding in enumerate(security_findings, start=1):
+            severity = finding["severity"].upper()
+
+            with st.expander(
+                f'{index}. {finding["title"]} — {severity} '
+                f'(Line {finding["line"]})'
+            ):
+                st.markdown(f"**Severity:** {severity}")
+                st.markdown(f'**Affected line:** {finding["line"]}')
+                st.write(finding["explanation"])
+                st.markdown("**Recommended fix**")
+                st.info(finding["suggestion"])
 
     st.subheader("Severity Breakdown")
 

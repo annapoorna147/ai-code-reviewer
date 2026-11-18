@@ -74,3 +74,4 @@ class ReviewResponse(BaseModel):
     status: Literal["clean", "issues_found", "ai_unavailable"]
     ai_status: Literal["available", "unavailable"]
     code_metrics: CodeMetrics | None = None
+    security_score: int = Field(default=100, ge=0, le=100)
