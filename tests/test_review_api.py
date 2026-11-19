@@ -242,3 +242,54 @@ def test_review_response_model_supports_missing_metrics():
     )
 
     assert result.code_metrics is None
+
+
+def test_fix_endpoint_returns_proposed_code(monkeypatch):
+    original_code = "result = eval(user_input)"
+    fixed_code = "result = ast.literal_eval(user_input)"
+
+    monkeypatch.setattr(
+        "app.main.generate_fix",
+        lambda **kwargs: fixed_code,
+    )
+
+    response = client.post(
+        "/fix",
+        json={
+            "code": original_code,
+            "title": "Unsafe eval",
+            "explanation": "eval can execute arbitrary code.",
+            "suggestion": "Use a safer parsing method.",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["original_code"] == original_code
+    assert data["fixed_code"] == fixed_code
+    assert data["status"] == "success"
+
+
+def test_fix_endpoint_handles_ai_unavailability(monkeypatch):
+    def unavailable_fix(**kwargs):
+        from app.services.fix_generator import FixGenerationError
+        raise FixGenerationError("Gemini is unavailable.")
+
+    monkeypatch.setattr(
+        "app.main.generate_fix",
+        unavailable_fix,
+    )
+
+    response = client.post(
+        "/fix",
+        json={
+            "code": "print('hello')",
+            "title": "Example issue",
+            "explanation": "Example explanation.",
+            "suggestion": "Example suggestion.",
+        },
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Gemini is unavailable."

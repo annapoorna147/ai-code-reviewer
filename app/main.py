@@ -8,11 +8,12 @@ from app.services.project_database import (
     get_project,
 )
 
-from app.models.review import ReviewRequest, ReviewResponse
+from app.models.review import ReviewRequest, ReviewResponse, FixRequest
 from app.services.code_analyzer import analyze_code
 from app.services.security_analyzer import analyze_security
 from app.services.advanced_metrics import analyze_advanced_metrics
 from app.services.ai_reviewer import review_with_ai, AIReviewError
+from app.services.fix_generator import generate_fix, FixGenerationError
 from app.services.quality_scorer import (
     calculate_quality_score,
     summarize_severity,
@@ -181,3 +182,55 @@ def review_history_detail(review_id: int, current_user: dict = Depends(get_curre
 @app.get("/analytics")
 def review_analytics(current_user: dict = Depends(get_current_user)):
     return get_analytics(user_id=current_user["id"])
+
+
+@app.post("/fix")
+def fix_code(
+    request: FixRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    try:
+        fixed_code = generate_fix(
+            code=request.code,
+            title=request.title,
+            explanation=request.explanation,
+            suggestion=request.suggestion,
+        )
+
+        return {
+            "original_code": request.code,
+            "fixed_code": fixed_code,
+            "status": "success",
+        }
+
+    except FixGenerationError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=str(error),
+        ) from None
+
+
+@app.post("/fix")
+def fix_code(
+    request: FixRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    try:
+        fixed_code = generate_fix(
+            code=request.code,
+            title=request.title,
+            explanation=request.explanation,
+            suggestion=request.suggestion,
+        )
+
+        return {
+            "original_code": request.code,
+            "fixed_code": fixed_code,
+            "status": "success",
+        }
+
+    except FixGenerationError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=str(error),
+        ) from None

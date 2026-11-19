@@ -75,3 +75,10 @@ class ReviewResponse(BaseModel):
     ai_status: Literal["available", "unavailable"]
     code_metrics: CodeMetrics | None = None
     security_score: int = Field(default=100, ge=0, le=100)
+
+
+class FixRequest(BaseModel):
+    code: str = Field(..., min_length=1, max_length=50000)
+    title: str = Field(..., min_length=1, max_length=200)
+    explanation: str = Field(..., min_length=1, max_length=2000)
+    suggestion: str = Field(..., min_length=1, max_length=2000)

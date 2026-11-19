@@ -44,6 +44,9 @@ if "username" not in st.session_state:
 if "review_result" not in st.session_state:
     st.session_state.review_result = None
 
+if "proposed_fix" not in st.session_state:
+    st.session_state.proposed_fix = None
+
 
 def auth_headers():
     return {
@@ -117,6 +120,40 @@ def submit_review(code, project_id=None):
     except requests.RequestException:
         return None, "Could not connect to the backend."
 
+
+
+def submit_fix(code, finding):
+    try:
+        payload = {
+            "code": code,
+            "title": finding["title"],
+            "explanation": finding["explanation"],
+            "suggestion": finding["suggestion"],
+        }
+
+        response = requests.post(
+            f"{API_URL}/fix",
+            json=payload,
+            headers=auth_headers(),
+            timeout=90,
+        )
+        response.raise_for_status()
+        return response.json(), None
+
+    except requests.HTTPError as error:
+        if error.response is not None and error.response.status_code == 401:
+            return None, "Your session may have expired. Please log in again."
+        try:
+            message = error.response.json().get("detail", "Fix generation failed.")
+        except (ValueError, AttributeError):
+            message = "Fix generation failed."
+        return None, str(message)
+
+    except requests.Timeout:
+        return None, "Fix generation timed out. Please try again."
+
+    except requests.RequestException:
+        return None, "Could not connect to the backend."
 
 def fetch_review_history():
     try:
@@ -440,6 +477,20 @@ else:
 st.divider()
 
 
+def apply_proposed_fix():
+    proposed = st.session_state.get("proposed_fix")
+
+    if proposed:
+        st.session_state.original_code_before_fix = proposed["original_code"]
+        st.session_state.code_editor = proposed["fixed_code"]
+        st.session_state.proposed_fix = None
+        st.session_state.review_result = None
+
+
+def discard_proposed_fix():
+    st.session_state.proposed_fix = None
+
+
 # ---------------- CODE REVIEW WORKSPACE ----------------
 
 st.subheader("Code Analysis Workspace")
@@ -469,12 +520,15 @@ result = calculate_average(values)
 print(result)
 """
 
+if "code_editor" not in st.session_state:
+    st.session_state.code_editor = default_code
+
 code = st.text_area(
     "Python source code",
-    value=default_code,
     height=320,
     placeholder="Paste your Python code here...",
     help="Maximum accepted code length: 50,000 characters.",
+    key="code_editor",
 )
 
 left, right = st.columns([1, 4])
@@ -506,6 +560,8 @@ if review_clicked:
         if error:
             st.error(error)
         else:
+            st.session_state.reviewed_code = code
+            st.session_state.proposed_fix = None
             st.session_state.review_result = result
 
 
@@ -690,6 +746,88 @@ if result:
                 st.write(finding["explanation"])
                 st.markdown("**Suggested improvement**")
                 st.info(finding["suggestion"])
+
+    # ---------------- AUTOMATED FIX GENERATOR ----------------
+
+    st.divider()
+    st.subheader("🛠️ Automated Fix Generator")
+    st.caption(
+        "Generate a suggested correction for a detected issue. "
+        "Review the proposal before applying it."
+    )
+
+    if findings:
+        selected_finding_index = st.selectbox(
+            "Choose an issue to fix",
+            options=range(len(findings)),
+            format_func=lambda index: (
+                f'{findings[index]["title"]} '
+                f'— {findings[index]["severity"].upper()} '
+                f'(Line {findings[index]["line"]})'
+            ),
+            key="fix_finding_selector",
+        )
+
+        if st.button(
+            "✨ Generate Fix",
+            key="generate_fix_button",
+            use_container_width=True,
+        ):
+            reviewed_code = st.session_state.get("reviewed_code", "")
+
+            with st.spinner("Generating a proposed correction..."):
+                proposal, fix_error = submit_fix(
+                    reviewed_code,
+                    findings[selected_finding_index],
+                )
+
+            if fix_error:
+                st.error(fix_error)
+            else:
+                st.session_state.proposed_fix = proposal
+                st.rerun()
+
+    else:
+        st.info("No detected issues are available to fix.")
+
+    proposed = st.session_state.get("proposed_fix")
+
+    if proposed:
+        st.markdown("### Before and After")
+
+        original_column, fixed_column = st.columns(2)
+
+        with original_column:
+            st.markdown("**Original code**")
+            st.code(proposed["original_code"], language="python")
+
+        with fixed_column:
+            st.markdown("**Proposed corrected code**")
+            st.code(proposed["fixed_code"], language="python")
+
+        st.warning(
+            "Review generated code carefully before applying it. "
+            "Generated code is syntax-checked but not executed."
+        )
+
+        apply_column, discard_column = st.columns(2)
+
+        with apply_column:
+            st.button(
+                "✅ Apply Fix",
+                key="apply_proposed_fix_button",
+                type="primary",
+                use_container_width=True,
+                on_click=apply_proposed_fix,
+            )
+
+        with discard_column:
+            st.button(
+                "Discard Fix",
+                key="discard_proposed_fix_button",
+                use_container_width=True,
+                on_click=discard_proposed_fix,
+            )
 
     st.divider()
     st.subheader("Download Review Report")
