@@ -29,6 +29,9 @@ class ReviewFinding(BaseModel):
     line: int
     explanation: str
     suggestion: str
+    root_cause: str | None = None
+    impact: str | None = None
+    confidence: Literal["low", "medium", "high"] | None = None
 
 
 class SeveritySummary(BaseModel):

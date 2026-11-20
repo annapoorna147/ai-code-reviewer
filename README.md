@@ -37,6 +37,16 @@ Note: Maintainability Index and technical debt are approximate estimates, not gu
 
 Note: Security analysis uses heuristic static analysis and may produce false positives or miss vulnerabilities. It is not a substitute for a professional security audit.
 
+### Advanced AI Code Intelligence
+- Context-aware AI explanations for detected code issues.
+- Root-cause analysis explaining why an issue occurs.
+- Potential impact descriptions highlighting practical consequences.
+- AI confidence levels: Low, Medium, and High.
+- Actionable recommendations for improving code.
+- Backward-compatible handling of findings without advanced intelligence fields.
+
+Note: AI-generated explanations and confidence levels are estimates. Review findings before making code changes.
+
 ### User Management and Security
 - User registration and login.
 - Secure password hashing using Argon2.

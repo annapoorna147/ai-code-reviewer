@@ -744,6 +744,20 @@ if result:
                 st.markdown(f"**Severity:** {severity_name}")
                 st.markdown(f'**Line:** {finding["line"]}')
                 st.write(finding["explanation"])
+
+                if finding.get("root_cause"):
+                    st.markdown("**Root cause**")
+                    st.write(finding["root_cause"])
+
+                if finding.get("impact"):
+                    st.markdown("**Potential impact**")
+                    st.warning(finding["impact"])
+
+                if finding.get("confidence"):
+                    st.caption(
+                        f'AI confidence: {finding["confidence"].title()}'
+                    )
+
                 st.markdown("**Suggested improvement**")
                 st.info(finding["suggestion"])
 
