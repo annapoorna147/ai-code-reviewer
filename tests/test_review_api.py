@@ -293,3 +293,43 @@ def test_fix_endpoint_handles_ai_unavailability(monkeypatch):
 
     assert response.status_code == 503
     assert response.json()["detail"] == "Gemini is unavailable."
+
+
+def test_review_returns_findings_in_priority_order(monkeypatch):
+    findings = [
+        ReviewFinding(
+            title="Minor issue",
+            severity="low",
+            line=1,
+            explanation="Minor concern.",
+            suggestion="Consider improving this.",
+            confidence="low",
+        ),
+        ReviewFinding(
+            title="Critical issue",
+            severity="critical",
+            line=2,
+            explanation="Serious concern.",
+            suggestion="Fix immediately.",
+            confidence="high",
+        ),
+    ]
+
+    monkeypatch.setattr(
+        "app.main.review_with_ai",
+        lambda code: findings,
+    )
+
+    response = client.post(
+        "/review",
+        json={"code": "print('hello')\nprint('world')"},
+    )
+
+    assert response.status_code == 200
+
+    returned_findings = response.json()["findings"]
+
+    assert returned_findings[0]["title"] == "Critical issue"
+    assert returned_findings[0]["priority_score"] == 100
+    assert returned_findings[1]["title"] == "Minor issue"
+    assert returned_findings[1]["priority_score"] == 20

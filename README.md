@@ -47,6 +47,26 @@ Note: Security analysis uses heuristic static analysis and may produce false pos
 
 Note: AI-generated explanations and confidence levels are estimates. Review findings before making code changes.
 
+### Intelligent Finding Prioritization
+- Individual priority scores from 0 to 100.
+- Severity-based priority ranking: Critical, High, Medium, Low.
+- Confidence-based score adjustments.
+- Automatic sorting from highest to lowest priority.
+- Priority score visualization in the Streamlit frontend.
+- Priority scores preserved in saved review records.
+- Separate priority, quality, and security scoring systems.
+
+Priority scoring:
+- Critical: 100 base points.
+- High: 80 base points.
+- Medium: 60 base points.
+- Low: 40 base points.
+- High confidence: no adjustment.
+- Medium or unspecified confidence: -10 points.
+- Low confidence: -20 points.
+
+Final scores are bounded between 0 and 100. Priority scores are heuristic guidance, not a substitute for engineering judgment.
+
 ### User Management and Security
 - User registration and login.
 - Secure password hashing using Argon2.

@@ -14,6 +14,7 @@ from app.services.security_analyzer import analyze_security
 from app.services.advanced_metrics import analyze_advanced_metrics
 from app.services.ai_reviewer import review_with_ai, AIReviewError
 from app.services.fix_generator import generate_fix, FixGenerationError
+from app.services.finding_prioritizer import prioritize_findings
 from app.services.quality_scorer import (
     calculate_quality_score,
     summarize_severity,
@@ -100,6 +101,8 @@ def review_code(request: ReviewRequest, current_user: dict = Depends(get_current
         if key not in existing_findings:
             combined_findings.append(finding)
             existing_findings.add(key)
+
+    combined_findings = prioritize_findings(combined_findings)
 
     quality_score = calculate_quality_score(combined_findings)
     severity_summary = summarize_severity(combined_findings)

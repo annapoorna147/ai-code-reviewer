@@ -742,6 +742,12 @@ if result:
                 expanded=index == 1,
             ):
                 st.markdown(f"**Severity:** {severity_name}")
+
+                priority_score = finding.get("priority_score")
+                if priority_score is not None:
+                    st.progress(priority_score / 100)
+                    st.caption(f"Priority Score: {priority_score}/100")
+
                 st.markdown(f'**Line:** {finding["line"]}')
                 st.write(finding["explanation"])
 

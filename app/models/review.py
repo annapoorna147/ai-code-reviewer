@@ -32,6 +32,7 @@ class ReviewFinding(BaseModel):
     root_cause: str | None = None
     impact: str | None = None
     confidence: Literal["low", "medium", "high"] | None = None
+    priority_score: int | None = Field(default=None, ge=0, le=100)
 
 
 class SeveritySummary(BaseModel):
