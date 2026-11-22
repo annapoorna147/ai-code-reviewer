@@ -69,6 +69,13 @@ class CodeMetrics(BaseModel):
     analysis_status: Literal["success", "syntax_error"]
 
 
+class ReviewSummary(BaseModel):
+    overall_assessment: str
+    key_risks: list[str] = Field(default_factory=list)
+    recommended_actions: list[str] = Field(default_factory=list)
+    fixing_order: list[str] = Field(default_factory=list)
+
+
 class ReviewResponse(BaseModel):
     language: str
     quality_score: int = Field(ge=0, le=100)
@@ -79,6 +86,7 @@ class ReviewResponse(BaseModel):
     ai_status: Literal["available", "unavailable"]
     code_metrics: CodeMetrics | None = None
     security_score: int = Field(default=100, ge=0, le=100)
+    review_summary: ReviewSummary | None = None
 
 
 class FixRequest(BaseModel):

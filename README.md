@@ -67,6 +67,18 @@ Priority scoring:
 
 Final scores are bounded between 0 and 100. Priority scores are heuristic guidance, not a substitute for engineering judgment.
 
+### Review Intelligence and Recommendations
+- Overall code health assessment.
+- Identification of the three highest-priority risks.
+- Actionable improvement recommendations.
+- Automatically generated fixing order based on finding priority.
+- Duplicate recommendation removal.
+- Review summaries available through the API and Streamlit dashboard.
+- Graceful summary generation when Gemini AI is unavailable.
+- Review summaries preserved in saved review history.
+
+Note: Review summaries are generated from detected findings and heuristic scores. They are decision-support guidance, not a substitute for manual code review.
+
 ### User Management and Security
 - User registration and login.
 - Secure password hashing using Argon2.

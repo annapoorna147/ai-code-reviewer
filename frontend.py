@@ -594,6 +594,43 @@ if result:
         "AI service: " + result["ai_status"].replace("_", " ").title()
     )
 
+    # ---------------- AI REVIEW INTELLIGENCE ----------------
+
+    review_summary = result.get("review_summary")
+
+    if review_summary:
+        st.divider()
+        st.subheader("🧠 Review Intelligence")
+
+        st.info(review_summary["overall_assessment"])
+
+        risk_col, action_col = st.columns(2)
+
+        with risk_col:
+            st.markdown("**Key Risks**")
+
+            if review_summary["key_risks"]:
+                for risk in review_summary["key_risks"]:
+                    st.warning(risk)
+            else:
+                st.success("No key risks identified.")
+
+        with action_col:
+            st.markdown("**Recommended Actions**")
+
+            if review_summary["recommended_actions"]:
+                for action in review_summary["recommended_actions"]:
+                    st.write(f"• {action}")
+            else:
+                st.success("No immediate actions recommended.")
+
+        if review_summary["fixing_order"]:
+            with st.expander("View Recommended Fixing Order"):
+                for index, item in enumerate(
+                    review_summary["fixing_order"], start=1
+                ):
+                    st.write(f"{index}. {item}")
+
     # ---------------- ADVANCED CODE METRICS ----------------
 
     metrics = result.get("code_metrics")

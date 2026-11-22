@@ -333,3 +333,36 @@ def test_review_returns_findings_in_priority_order(monkeypatch):
     assert returned_findings[0]["priority_score"] == 100
     assert returned_findings[1]["title"] == "Minor issue"
     assert returned_findings[1]["priority_score"] == 20
+
+
+def test_review_returns_intelligence_summary():
+    response = client.post(
+        "/review",
+        json={"code": "result = eval(user_input)"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    summary = data["review_summary"]
+
+    assert summary is not None
+    assert summary["overall_assessment"]
+    assert len(summary["key_risks"]) >= 1
+    assert len(summary["recommended_actions"]) >= 1
+    assert len(summary["fixing_order"]) >= 1
+
+
+def test_clean_review_returns_empty_intelligence_lists():
+    response = client.post(
+        "/review",
+        json={"code": "print('Hello World')"},
+    )
+
+    assert response.status_code == 200
+    summary = response.json()["review_summary"]
+
+    assert summary["overall_assessment"]
+    assert summary["key_risks"] == []
+    assert summary["recommended_actions"] == []
+    assert summary["fixing_order"] == []
