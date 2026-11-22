@@ -227,29 +227,3 @@ def fix_code(
             status_code=503,
             detail=str(error),
         ) from None
-
-
-@app.post("/fix")
-def fix_code(
-    request: FixRequest,
-    current_user: dict = Depends(get_current_user),
-):
-    try:
-        fixed_code = generate_fix(
-            code=request.code,
-            title=request.title,
-            explanation=request.explanation,
-            suggestion=request.suggestion,
-        )
-
-        return {
-            "original_code": request.code,
-            "fixed_code": fixed_code,
-            "status": "success",
-        }
-
-    except FixGenerationError as error:
-        raise HTTPException(
-            status_code=503,
-            detail=str(error),
-        ) from None

@@ -178,6 +178,33 @@ Open another Terminal window:
 
 Frontend: http://localhost:8501
 
+
+## Docker Deployment
+
+Ensure Docker Desktop is running and the root `.env` file is configured.
+
+Build and start the application:
+
+    docker compose up --build -d
+
+Application URLs:
+
+- Streamlit dashboard: http://localhost:8501
+- FastAPI backend: http://localhost:8000
+- API documentation: http://localhost:8000/docs
+- Health check: http://localhost:8000/health
+
+Useful commands:
+
+    docker compose ps
+    docker compose logs -f
+    docker compose down
+
+SQLite data is persisted in the host `data/` directory.
+Never commit `.env` or expose API keys and JWT secrets.
+
+
+
 ## API Endpoints
 
 | Method | Endpoint | Description |
@@ -281,9 +308,9 @@ The application uses SQLite tables for:
 
 ## Run Tests
 
-    python -m pytest -q --ignore=ai-code-reviewer
+    python -m pytest tests/ -q
 
-The nested `ai-code-reviewer/` directory is excluded because it contains duplicate test module names.
+The main test suite is located in the `tests/` directory.
 
 ## Code Architecture Analysis
 
@@ -324,6 +351,7 @@ Dependency results are returned through the `dependency_metrics` field of the `/
 - Day 9: Project-linked code reviews and project-specific review history.
 - Day 10: Advanced code quality analytics, cyclomatic complexity, maintainability index, duplicate code detection, technical debt estimation, and dashboard integration.
 - Day 11: Security vulnerability detection, separate security scoring, security analysis dashboard, and automated security tests.
+- Final deployment: Docker Compose, backend health checks, input validation, and regression testing (120 tests passed).
 
 ## Author
 
@@ -332,4 +360,3 @@ Annapoorna S U
 GitHub: https://github.com/annapoorna147
 
 Repository: https://github.com/annapoorna147/ai-code-reviewer
-- Day 17: Dependency and package intelligence.

@@ -62,9 +62,9 @@ class TechnicalDebt(BaseModel):
 class CodeMetrics(BaseModel):
     lines_of_code: int = Field(ge=0)
     total_complexity: int | None = Field(default=None, ge=0)
-    function_complexities: list[FunctionComplexity] = []
+    function_complexities: list[FunctionComplexity] = Field(default_factory=list)
     maintainability_index: float | None = Field(default=None, ge=0, le=100)
-    duplicate_blocks: list[DuplicateBlock] = []
+    duplicate_blocks: list[DuplicateBlock] = Field(default_factory=list)
     technical_debt: TechnicalDebt
     analysis_status: Literal["success", "syntax_error"]
 
