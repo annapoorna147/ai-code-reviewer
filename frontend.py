@@ -799,7 +799,78 @@ if result:
                 "the submitted code contains a syntax error."
             )
 
+    # ---------------- DEPENDENCY INTELLIGENCE ----------------
+
+    dependency = result.get("dependency_metrics")
+
+    if dependency:
+        st.divider()
+        st.subheader("📦 Dependency Intelligence")
+
+        if dependency["analysis_status"] == "success":
+            imports = dependency["imports"]
+            unused = dependency["unused_imports"]
+            duplicates = dependency["duplicate_imports"]
+            risky = dependency["risky_patterns"]
+            recommendations = dependency["recommendations"]
+
+            dependency_cols = st.columns(3)
+
+            dependency_cols[0].metric("Imported Modules", len(imports))
+            dependency_cols[1].metric("Unused Imports", len(unused))
+            dependency_cols[2].metric("Duplicate Imports", len(duplicates))
+
+            with st.expander("📚 Imported Packages and Modules"):
+                if imports:
+                    st.write(", ".join(imports))
+                else:
+                    st.info("No imports detected.")
+
+            with st.expander("🧹 Unused Import Detection"):
+                if unused:
+                    for module in unused:
+                        st.warning(f"Unused import: {module}")
+                else:
+                    st.success("No unused imports detected.")
+
+            with st.expander("♻️ Duplicate Import Detection"):
+                if duplicates:
+                    for module in duplicates:
+                        st.warning(f"Duplicate import: {module}")
+                else:
+                    st.success("No duplicate imports detected.")
+
+            st.markdown("**Potentially Risky Usage Patterns**")
+
+            if risky:
+                for pattern in risky:
+                    st.warning(pattern)
+            else:
+                st.success("No risky dependency usage patterns detected.")
+
+            st.markdown("**Dependency Recommendations**")
+
+            if recommendations:
+                for recommendation in recommendations:
+                    st.info(recommendation)
+            else:
+                st.success("No dependency improvement recommendations.")
+
+            st.caption(
+                "Analysis is based on static inspection of the submitted "
+                "Python source. It does not verify package versions, "
+                "installed environments, or known vulnerability databases."
+            )
+
+        else:
+            st.warning(
+                "Dependency analysis is unavailable because "
+                "the submitted code contains a syntax error."
+            )
+
     # ---------------- SECURITY ANALYSIS ----------------
+
+
 
 
 

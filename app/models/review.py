@@ -109,6 +109,15 @@ class ArchitectureMetrics(BaseModel):
     recommendations: list[str] = Field(default_factory=list)
 
 
+class DependencyMetrics(BaseModel):
+    analysis_status: Literal["success", "syntax_error"]
+    imports: list[str] = Field(default_factory=list)
+    unused_imports: list[str] = Field(default_factory=list)
+    duplicate_imports: list[str] = Field(default_factory=list)
+    risky_patterns: list[str] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+
+
 class ReviewResponse(BaseModel):
     language: str
     quality_score: int = Field(ge=0, le=100)
@@ -121,6 +130,7 @@ class ReviewResponse(BaseModel):
     security_score: int = Field(default=100, ge=0, le=100)
     review_summary: ReviewSummary | None = None
     architecture_metrics: ArchitectureMetrics | None = None
+    dependency_metrics: DependencyMetrics | None = None
 
 
 class FixRequest(BaseModel):

@@ -17,6 +17,7 @@ from app.services.fix_generator import generate_fix, FixGenerationError
 from app.services.finding_prioritizer import prioritize_findings
 from app.services.review_summary import generate_review_summary
 from app.services.architecture_analyzer import analyze_architecture
+from app.services.dependency_analyzer import analyze_dependencies
 from app.services.quality_scorer import (
     calculate_quality_score,
     summarize_severity,
@@ -134,6 +135,7 @@ def review_code(request: ReviewRequest, current_user: dict = Depends(get_current
     )
 
     architecture_metrics = analyze_architecture(request.code)
+    dependency_metrics = analyze_dependencies(request.code)
 
     if combined_findings:
         status = "issues_found"
@@ -154,6 +156,7 @@ def review_code(request: ReviewRequest, current_user: dict = Depends(get_current
         security_score=security_score,
         review_summary=review_summary,
         architecture_metrics=architecture_metrics,
+        dependency_metrics=dependency_metrics,
     )
 
     save_review(

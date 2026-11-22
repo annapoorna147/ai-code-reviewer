@@ -366,3 +366,27 @@ def test_clean_review_returns_empty_intelligence_lists():
     assert summary["key_risks"] == []
     assert summary["recommended_actions"] == []
     assert summary["fixing_order"] == []
+
+
+def test_review_returns_dependency_metrics():
+    code = """
+import os
+import json
+import requests
+
+def process_data():
+    return json.dumps({"status": "success"})
+"""
+
+    response = client.post("/review", json={"code": code})
+
+    assert response.status_code == 200
+    dependencies = response.json()["dependency_metrics"]
+
+    assert dependencies is not None
+    assert dependencies["analysis_status"] == "success"
+    assert "os" in dependencies["imports"]
+    assert "json" in dependencies["imports"]
+    assert "requests" in dependencies["imports"]
+    assert "os" in dependencies["unused_imports"]
+    assert dependencies["recommendations"]

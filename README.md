@@ -78,6 +78,18 @@ Final scores are bounded between 0 and 100. Priority scores are heuristic guidan
 - Syntax-error handling without executing submitted code.
 - Analysis is limited to the submitted Python source file.
 
+### Dependency and Package Intelligence
+
+- Imported package and module detection.
+- Unused import detection using Python AST analysis.
+- Duplicate import detection.
+- Risky usage detection for pickle, unsafe YAML loading, eval(), and subprocess shell execution.
+- Actionable dependency cleanup recommendations.
+- Syntax-error handling without executing submitted code.
+- Results displayed in the Streamlit dashboard and returned through the review API.
+
+Note: Dependency analysis uses static source inspection. It does not verify installed package versions or query vulnerability databases.
+
 ### Review Intelligence and Recommendations
 - Overall code health assessment.
 - Identification of the three highest-priority risks.
@@ -286,6 +298,19 @@ It reports:
 
 Architecture results are returned through the `architecture_metrics` field of the `/review` API response and included in saved review history.
 
+## Dependency and Package Analysis
+
+The dependency analyzer uses Python's built-in AST module to inspect imports and potentially risky package usage without executing submitted code.
+
+It reports:
+- Imported top-level modules.
+- Potentially unused imports.
+- Duplicate imports.
+- Risky patterns such as unsafe pickle deserialization, unsafe YAML loading, eval(), and subprocess calls with shell=True.
+- Recommendations for dependency cleanup and safer usage.
+
+Dependency results are returned through the `dependency_metrics` field of the `/review` API response and included in saved review history. The Streamlit dashboard presents the results in a dedicated Dependency Intelligence section.
+
 ## Development Progress
 
 - Day 1: FastAPI foundation and automated tests.
@@ -307,3 +332,4 @@ Annapoorna S U
 GitHub: https://github.com/annapoorna147
 
 Repository: https://github.com/annapoorna147/ai-code-reviewer
+- Day 17: Dependency and package intelligence.
