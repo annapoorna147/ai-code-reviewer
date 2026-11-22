@@ -706,7 +706,102 @@ if result:
             "This report may contain static-analysis findings only."
         )
 
+    # ---------------- ARCHITECTURE INTELLIGENCE ----------------
+
+    architecture = result.get("architecture_metrics")
+
+    if architecture:
+        st.divider()
+        st.subheader("🏗️ Architecture Intelligence")
+
+        if architecture["analysis_status"] == "success":
+            classes = architecture["classes"]
+            functions = architecture["functions"]
+            dependencies = architecture["dependencies"]
+            call_graph = architecture["call_graph"]
+            coupling = architecture["coupling_metrics"]
+            recommendations = architecture["recommendations"]
+
+            architecture_cols = st.columns(4)
+
+            architecture_cols[0].metric("Classes", len(classes))
+            architecture_cols[1].metric("Functions", len(functions))
+            architecture_cols[2].metric("Dependencies", len(dependencies))
+            architecture_cols[3].metric("Internal Calls", len(call_graph))
+
+            with st.expander("📦 Class and Method Structure"):
+                if classes:
+                    for cls in classes:
+                        st.markdown(f'**{cls["name"]}** — Line {cls["line"]}')
+
+                        if cls["bases"]:
+                            st.caption("Inherits from: " + ", ".join(cls["bases"]))
+
+                        if cls["methods"]:
+                            st.write("Methods: " + ", ".join(cls["methods"]))
+                        else:
+                            st.caption("No methods detected.")
+                else:
+                    st.info("No classes detected.")
+
+            with st.expander("🔗 Function Call Graph"):
+                if call_graph:
+                    st.dataframe(
+                        call_graph,
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+                else:
+                    st.info("No internal function calls detected.")
+
+            with st.expander("📚 Imported Dependencies"):
+                if dependencies:
+                    st.write(", ".join(dependencies))
+                else:
+                    st.info("No imports detected.")
+
+            with st.expander("⚖️ Function Coupling Indicators"):
+                if coupling:
+                    st.dataframe(
+                        coupling,
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+                else:
+                    st.info("No coupling data available.")
+
+            st.markdown("**Architecture Recommendations**")
+
+            if recommendations:
+                for recommendation in recommendations:
+                    st.warning(recommendation)
+            else:
+                st.success("No architecture improvement recommendations at this time.")
+
+            with st.expander("View Detected Functions"):
+                if functions:
+                    st.dataframe(
+                        functions,
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+                else:
+                    st.info("No functions detected.")
+
+            st.caption(
+                "Architecture analysis covers the submitted Python source file, "
+                "not the entire project or its external modules."
+            )
+
+        else:
+            st.warning(
+                "Architecture analysis is unavailable because "
+                "the submitted code contains a syntax error."
+            )
+
     # ---------------- SECURITY ANALYSIS ----------------
+
+
 
     st.divider()
     st.subheader("Security Analysis")

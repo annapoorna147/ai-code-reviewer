@@ -76,6 +76,39 @@ class ReviewSummary(BaseModel):
     fixing_order: list[str] = Field(default_factory=list)
 
 
+class ArchitectureClass(BaseModel):
+    name: str
+    line: int
+    bases: list[str] = Field(default_factory=list)
+    methods: list[str] = Field(default_factory=list)
+
+
+class ArchitectureFunction(BaseModel):
+    name: str
+    line: int
+
+
+class CallGraphEdge(BaseModel):
+    caller: str
+    callee: str
+
+
+class CouplingMetric(BaseModel):
+    function: str
+    incoming_calls: int = Field(ge=0)
+    outgoing_calls: int = Field(ge=0)
+
+
+class ArchitectureMetrics(BaseModel):
+    analysis_status: Literal["success", "syntax_error"]
+    classes: list[ArchitectureClass] = Field(default_factory=list)
+    functions: list[ArchitectureFunction] = Field(default_factory=list)
+    dependencies: list[str] = Field(default_factory=list)
+    call_graph: list[CallGraphEdge] = Field(default_factory=list)
+    coupling_metrics: list[CouplingMetric] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+
+
 class ReviewResponse(BaseModel):
     language: str
     quality_score: int = Field(ge=0, le=100)
@@ -87,6 +120,7 @@ class ReviewResponse(BaseModel):
     code_metrics: CodeMetrics | None = None
     security_score: int = Field(default=100, ge=0, le=100)
     review_summary: ReviewSummary | None = None
+    architecture_metrics: ArchitectureMetrics | None = None
 
 
 class FixRequest(BaseModel):

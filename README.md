@@ -67,6 +67,17 @@ Priority scoring:
 
 Final scores are bounded between 0 and 100. Priority scores are heuristic guidance, not a substitute for engineering judgment.
 
+### Code Architecture Intelligence
+
+- Python class and method structure detection.
+- Function and asynchronous function discovery.
+- Function call graph generation.
+- Import and dependency analysis.
+- Internal function coupling indicators.
+- Architecture recommendations based on structural heuristics.
+- Syntax-error handling without executing submitted code.
+- Analysis is limited to the submitted Python source file.
+
 ### Review Intelligence and Recommendations
 - Overall code health assessment.
 - Identification of the three highest-priority risks.
@@ -261,6 +272,19 @@ The application uses SQLite tables for:
     python -m pytest -q --ignore=ai-code-reviewer
 
 The nested `ai-code-reviewer/` directory is excluded because it contains duplicate test module names.
+
+## Code Architecture Analysis
+
+The architecture analyzer uses Python's built-in AST module to inspect submitted source code without executing it.
+
+It reports:
+- Classes, inheritance, methods, and function definitions.
+- Internal function call relationships.
+- Imported top-level dependencies.
+- Incoming and outgoing internal call indicators.
+- Heuristic recommendations for large classes, highly connected functions, and large dependency sets.
+
+Architecture results are returned through the `architecture_metrics` field of the `/review` API response and included in saved review history.
 
 ## Development Progress
 

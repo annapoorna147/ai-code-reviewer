@@ -16,6 +16,7 @@ from app.services.ai_reviewer import review_with_ai, AIReviewError
 from app.services.fix_generator import generate_fix, FixGenerationError
 from app.services.finding_prioritizer import prioritize_findings
 from app.services.review_summary import generate_review_summary
+from app.services.architecture_analyzer import analyze_architecture
 from app.services.quality_scorer import (
     calculate_quality_score,
     summarize_severity,
@@ -132,6 +133,8 @@ def review_code(request: ReviewRequest, current_user: dict = Depends(get_current
         ai_status=ai_status,
     )
 
+    architecture_metrics = analyze_architecture(request.code)
+
     if combined_findings:
         status = "issues_found"
     elif ai_status == "unavailable":
@@ -150,6 +153,7 @@ def review_code(request: ReviewRequest, current_user: dict = Depends(get_current
         code_metrics=code_metrics,
         security_score=security_score,
         review_summary=review_summary,
+        architecture_metrics=architecture_metrics,
     )
 
     save_review(
